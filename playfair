@@ -1,0 +1,97 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#define SIZE 5
+char matrix[SIZE][SIZE];
+void generateMatrix(char keyword[]) {
+    int i, j, k, l, m = 0, n = 0;
+    char temp[SIZE * SIZE];
+    int freq[26] = {0};
+    k = 0;
+    for (i = 0; keyword[i]; i++) {
+        if (!isalpha(keyword[i]))
+            continue;
+        keyword[i] = toupper(keyword[i]);
+        if (!freq[keyword[i] - 'A']) {
+            temp[k++] = keyword[i];
+            freq[keyword[i] - 'A'] = 1;
+        }
+    }
+    for (i = 0; i < 26; i++) {
+        if (i == ('J' - 'A'))
+            continue;
+        if (!freq[i]) {
+            temp[k++] = i + 'A';
+        }
+    }
+    for (i = 0; i < SIZE; i++) {
+        for (j = 0; j < SIZE; j++) {
+            matrix[i][j] = temp[m++];
+        }
+    }
+}
+void getCoords(char ch, int *x, int *y) {
+    int i, j;
+    for (i = 0; i < SIZE; i++) {
+        for (j = 0; j < SIZE; j++) {
+            if (matrix[i][j] == ch) {
+                *x = i;
+                *y = j;
+                return;
+            }
+        }
+    }
+}
+void playfairEncrypt(char plainText[], char keyword[]) {
+    generateMatrix(keyword);
+    int i, len = strlen(plainText);
+    char output[1000] = "";
+    int x1, y1, x2, y2;
+    for (i = 0; i < len; i += 2) {
+        while (!isalpha(plainText[i])) i++;
+
+        if (!plainText[i+1]) {
+            plainText[i+1] = 'X';
+            len++;
+        }
+        while (!isalpha(plainText[i+1])) i++;
+
+        if (plainText[i] == plainText[i+1]) {
+            memmove(plainText + i + 2, plainText + i + 1, len - i);
+            plainText[i+1] = 'X';
+            len++;
+        }
+        plainText[i] = toupper(plainText[i]);
+        plainText[i+1] = toupper(plainText[i+1]);
+
+        getCoords(plainText[i], &x1, &y1);
+        getCoords(plainText[i+1], &x2, &y2);
+
+        if (x1 == x2) {
+            output[i] = matrix[x1][(y1 + 1) % SIZE];
+            output[i+1] = matrix[x2][(y2 + 1) % SIZE];
+        } else if (y1 == y2) {
+            output[i] = matrix[(x1 + 1) % SIZE][y1];
+            output[i+1] = matrix[(x2 + 1) % SIZE][y2];
+        } else {
+            output[i] = matrix[x1][y2];
+            output[i+1] = matrix[x2][y1];
+        }
+    }
+    output[len] = '\0';
+    printf("Encrypted Text: %s\n", output);
+}
+
+int main() {
+    char keyword[100], plainText[1000];
+    printf("Enter the keyword: ");
+    fgets(keyword, sizeof(keyword), stdin);
+    keyword[strlen(keyword) - 1] = '\0';  // Remove newline character
+
+    printf("Enter the plaintext: ");
+    fgets(plainText, sizeof(plainText), stdin);
+    plainText[strlen(plainText) - 1] = '\0';  // Remove newline character
+
+    playfairEncrypt(plainText, keyword);
+    return 0;
+}
